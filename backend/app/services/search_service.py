@@ -114,6 +114,14 @@ class SearchService:
             extra={"index_name": self.index_name, "query_preview": query[:120]},
         )
         try:
+            if not self._client.indices.exists(index=self.index_name):
+                logger.info(
+                    "Elasticsearch index does not exist yet; creating it.",
+                    extra={"index_name": self.index_name},
+                )
+                self.ensure_index()
+                return []
+
             response = self._client.search(
                 index=self.index_name,
                 query={
@@ -145,7 +153,7 @@ class SearchService:
                 "Elasticsearch query failed.",
                 extra={"index_name": self.index_name, "query_preview": query[:120]},
             )
-            raise RuntimeError(f"Elasticsearch query failed: {exc}") from exc
+            return []
 
     @property
     def available(self) -> bool:
